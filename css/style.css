@@ -1,0 +1,49 @@
+* {
+	margin: 0;
+	padding: 0;
+	box-sizing: border-box;
+}
+
+.play {
+	margin-top: 50px;
+	padding: 10px 30px;
+	position: absolute;
+	left: 50%;
+	transform: translateX(-50%);
+}
+
+.container {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	height: 100vh;
+}
+
+.grid {
+	width: 500px;
+	height: 500px;
+	border: 1px solid black;
+	display: flex;
+	flex-wrap: wrap;
+}
+
+.square {
+	width: 10%;
+	height: 10%;
+	border: 1px solid black;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+
+.bomb {
+	background-color: red;
+}
+
+.checked {
+	background-color: lime;
+}
+
+.hidden {
+	visibility: hidden;
+}
