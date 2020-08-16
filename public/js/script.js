@@ -1,5 +1,7 @@
 const grid = document.querySelector(".grid");
 const playButton = document.querySelector(".play");
+const victoryModal = document.querySelector(".victory-modal");
+const gameOverModal = document.querySelector(".game-over-modal");
 const gridWidth = 10;
 let squaresArray = [];
 let bombsNumber = 15;
@@ -74,6 +76,22 @@ showNearbyBombs = () => {
 	}
 };
 
+const shuffle = (array) => {
+	let counter = array.length;
+
+	while (counter > 0) {
+		let index = Math.floor(Math.random() * counter);
+
+		counter--;
+
+		let temp = array[counter];
+		array[counter] = array[index];
+		array[index] = temp;
+	}
+
+	return array;
+};
+
 const playGame = () => {
 	squaresArray = [];
 	gameOver = false;
@@ -83,7 +101,7 @@ const playGame = () => {
 	const bombsArray = Array(bombsNumber).fill("bomb");
 	const emptyArray = Array(gridWidth * gridWidth - bombsNumber).fill("empty");
 	const gameArray = [...bombsArray, ...emptyArray];
-	const randomOrderArray = gameArray.sort(() => Math.random() - 0.5);
+	const randomOrderArray = shuffle(gameArray);
 
 	for (let i = 0; i < gridWidth * gridWidth; i++) {
 		const square = document.createElement("div");
@@ -138,16 +156,19 @@ const win = (square) => {
 		bombsFound = 0;
 		playButton.classList.remove("hidden");
 		console.log("Victory!!!");
+		victoryModal.classList.remove("hidden");
 	}
 };
 
 const fail = () => {
 	console.log("game over");
+	gameOverModal.classList.remove("hidden");
 	gameOver = true;
 	playButton.classList.remove("hidden");
 	for (let i = 0; i < squaresArray.length; i++) {
 		if (squaresArray[i].classList.contains("bomb")) {
 			squaresArray[i].textContent = "💣";
+			squaresArray[i].style.backgroundImage = "none";
 		}
 	}
 };
@@ -170,11 +191,10 @@ const click = (square) => {
 		if (square.classList.contains("flag")) {
 			square.classList.remove("flag");
 			flags--;
-			square.textContent = "";
+			square.textContent = square.getAttribute("data-mines-around");
 		}
 	}
 };
-let counter = 0;
 
 const checkNeighborhood = (square) => {
 	const isLeftEdge = square.id % gridWidth === 0;
@@ -183,7 +203,6 @@ const checkNeighborhood = (square) => {
 	setTimeout(() => {
 		if (!isLeftEdge) {
 			click(document.getElementById(squaresArray[Number(square.id) - 1].id));
-			counter++;
 		}
 
 		if (!isLeftEdge && square.id > 9) {
@@ -192,14 +211,12 @@ const checkNeighborhood = (square) => {
 					squaresArray[Number(square.id) - 1 - gridWidth].id
 				)
 			);
-			counter++;
 		}
 
 		if (square.id > 9) {
 			click(
 				document.getElementById(squaresArray[Number(square.id) - gridWidth].id)
 			);
-			counter++;
 		}
 
 		if (!isRightEdge && square.id > 9) {
@@ -208,12 +225,10 @@ const checkNeighborhood = (square) => {
 					squaresArray[Number(square.id) - gridWidth + 1].id
 				)
 			);
-			counter++;
 		}
 
 		if (!isRightEdge) {
 			click(document.getElementById(squaresArray[Number(square.id) + 1].id));
-			counter++;
 		}
 
 		if (!isRightEdge && square.id < 90) {
@@ -222,14 +237,12 @@ const checkNeighborhood = (square) => {
 					squaresArray[Number(square.id) + 1 + gridWidth].id
 				)
 			);
-			counter++;
 		}
 
 		if (square.id < 90) {
 			click(
 				document.getElementById(squaresArray[Number(square.id) + gridWidth].id)
 			);
-			counter++;
 		}
 
 		if (!isLeftEdge && square.id < 90) {
@@ -238,9 +251,7 @@ const checkNeighborhood = (square) => {
 					squaresArray[Number(square.id) - 1 + gridWidth].id
 				)
 			);
-			counter++;
 		}
-		console.log(counter);
 	}, 1);
 };
 
@@ -250,4 +261,6 @@ playButton.addEventListener("click", () => {
 	grid.innerHTML = null;
 	playGame();
 	playButton.classList.add("hidden");
+	victoryModal.classList.add("hidden");
+	gameOverModal.classList.add("hidden");
 });
