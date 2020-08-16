@@ -1,7 +1,7 @@
 const grid = document.querySelector(".grid");
 const playButton = document.querySelector(".play");
 const gridWidth = 10;
-const squaresArray = [];
+let squaresArray = [];
 let bombsNumber = 15;
 let flags = 0;
 let gameOver = false;
@@ -11,7 +11,7 @@ const createEmptyGridboard = () => {
 	for (let i = 0; i < gridWidth * gridWidth; i++) {
 		const square = document.createElement("div");
 		square.classList.add("square");
-		square.textContent = i;
+		// square.textContent = i;
 		grid.appendChild(square);
 		square.addEventListener("contextmenu", (e) => {
 			e.preventDefault();
@@ -19,7 +19,63 @@ const createEmptyGridboard = () => {
 	}
 };
 
+showNearbyBombs = () => {
+	for (let i = 0; i < squaresArray.length; i++) {
+		let minesAround = 0;
+		const isLeftEdge = i % gridWidth === 0;
+		const isRightEdge = i % gridWidth === gridWidth - 1;
+
+		if (squaresArray[i].classList.contains("empty")) {
+			if (!isLeftEdge && squaresArray[i - 1].classList.contains("bomb")) {
+				minesAround++;
+			}
+
+			if (
+				i > 9 &&
+				!isLeftEdge &&
+				squaresArray[i - 1 - gridWidth].classList.contains("bomb")
+			) {
+				minesAround++;
+			}
+
+			if (i > 9 && squaresArray[i - gridWidth].classList.contains("bomb"))
+				minesAround++;
+
+			if (
+				!isRightEdge &&
+				i > 9 &&
+				squaresArray[i + 1 - gridWidth].classList.contains("bomb")
+			) {
+				minesAround++;
+			}
+
+			if (!isRightEdge && squaresArray[i + 1].classList.contains("bomb"))
+				minesAround++;
+
+			if (
+				i < 90 &&
+				!isRightEdge &&
+				squaresArray[i + 1 + gridWidth].classList.contains("bomb")
+			)
+				minesAround++;
+
+			if (i < 90 && squaresArray[i + gridWidth].classList.contains("bomb"))
+				minesAround++;
+
+			if (
+				i < 90 &&
+				!isLeftEdge &&
+				squaresArray[i - 1 + gridWidth].classList.contains("bomb")
+			)
+				minesAround++;
+
+			squaresArray[i].setAttribute("data-mines-around", minesAround);
+		}
+	}
+};
+
 const playGame = () => {
+	squaresArray = [];
 	gameOver = false;
 	flags = 0;
 	bombsFound = 0;
@@ -49,57 +105,8 @@ const playGame = () => {
 				addFlag(square);
 			}
 		});
-
-		for (let j = 0; j < squaresArray.length; j++) {
-			let minesAround = 0;
-			const isLeftEdge = j % gridWidth === 0;
-			const isRightEdge = j % gridWidth === gridWidth - 1;
-
-			if (squaresArray[j].classList.contains("empty")) {
-				if (!isLeftEdge && squaresArray[j - 1].classList.contains("bomb")) {
-					minesAround++;
-				}
-
-				if (
-					j > 9 &&
-					!isLeftEdge &&
-					squaresArray[j - 1 - gridWidth].classList.contains("bomb")
-				) {
-					minesAround++;
-				}
-
-				if (j > 9 && squaresArray[j - gridWidth].classList.contains("bomb"))
-					minesAround++;
-
-				if (
-					!isRightEdge &&
-					j > 9 &&
-					squaresArray[j + 1 - gridWidth].classList.contains("bomb")
-				) {
-					minesAround++;
-				}
-
-				// if (!isRightEdge && squaresArray[j + 1].classList.contains("bomb"))
-				// 	minesAround++;
-
-				// if (
-				// 	j < 90 &&
-				// 	!isRightEdge &&
-				// 	squaresArray[j + 1 + gridWidth].classList.contains("bomb"))
-				// 	minesAround++;
-
-				// if (j < 90 && squaresArray[j + gridWidth].classList.contains("bomb"))
-				// 	minesAround++;
-
-				// if (
-				// 	j < 90 &&
-				// 	!isLeftEdge &&
-				// 	squaresArray[j - 1 + gridWidth].classList.contains("bomb"))
-				// 	minesAround++;
-			}
-			squaresArray[j].setAttribute("data", minesAround);
-		}
 	}
+	showNearbyBombs();
 };
 
 const addFlag = (square) => {
@@ -134,24 +141,107 @@ const win = (square) => {
 	}
 };
 
+const fail = () => {
+	console.log("game over");
+	gameOver = true;
+	playButton.classList.remove("hidden");
+	for (let i = 0; i < squaresArray.length; i++) {
+		if (squaresArray[i].classList.contains("bomb")) {
+			squaresArray[i].textContent = "💣";
+		}
+	}
+};
+
 const click = (square) => {
 	if (square.classList.contains("bomb")) {
-		console.log("game over");
-		gameOver = true;
-		playButton.classList.remove("hidden");
-		for (let i = 0; i < squaresArray.length; i++) {
-			if (squaresArray[i].classList.contains("bomb")) {
-				squaresArray[i].textContent = "💣";
-			}
-		}
+		fail();
 	} else {
 		square.classList.add("checked");
+
+		if (square.getAttribute("data-mines-around") > 0) {
+			square.textContent = square.getAttribute("data-mines-around");
+		} else {
+			if (!square.classList.contains("x")) {
+				checkNeighborhood(square);
+				square.classList.add("x");
+			}
+		}
+
 		if (square.classList.contains("flag")) {
 			square.classList.remove("flag");
 			flags--;
 			square.textContent = "";
 		}
 	}
+};
+let counter = 0;
+
+const checkNeighborhood = (square) => {
+	const isLeftEdge = square.id % gridWidth === 0;
+	const isRightEdge = square.id % gridWidth === gridWidth - 1;
+
+	setTimeout(() => {
+		if (!isLeftEdge) {
+			click(document.getElementById(squaresArray[Number(square.id) - 1].id));
+			counter++;
+		}
+
+		if (!isLeftEdge && square.id > 9) {
+			click(
+				document.getElementById(
+					squaresArray[Number(square.id) - 1 - gridWidth].id
+				)
+			);
+			counter++;
+		}
+
+		if (square.id > 9) {
+			click(
+				document.getElementById(squaresArray[Number(square.id) - gridWidth].id)
+			);
+			counter++;
+		}
+
+		if (!isRightEdge && square.id > 9) {
+			click(
+				document.getElementById(
+					squaresArray[Number(square.id) - gridWidth + 1].id
+				)
+			);
+			counter++;
+		}
+
+		if (!isRightEdge) {
+			click(document.getElementById(squaresArray[Number(square.id) + 1].id));
+			counter++;
+		}
+
+		if (!isRightEdge && square.id < 90) {
+			click(
+				document.getElementById(
+					squaresArray[Number(square.id) + 1 + gridWidth].id
+				)
+			);
+			counter++;
+		}
+
+		if (square.id < 90) {
+			click(
+				document.getElementById(squaresArray[Number(square.id) + gridWidth].id)
+			);
+			counter++;
+		}
+
+		if (!isLeftEdge && square.id < 90) {
+			click(
+				document.getElementById(
+					squaresArray[Number(square.id) - 1 + gridWidth].id
+				)
+			);
+			counter++;
+		}
+		console.log(counter);
+	}, 1);
 };
 
 createEmptyGridboard();
