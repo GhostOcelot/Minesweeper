@@ -1,2 +1,5 @@
 .DS_Store
 .vscode/
+.firebaserc
+.firebase
+.firebase.json
